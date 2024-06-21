@@ -36,7 +36,7 @@ if __name__ == "__main__":
     create_directory('result')
 
     # 2. Membuat direktori model
-    create_directory('model')
+    create_directory('models')
 
     # 3. Install requirements.txt
     install_requirements()

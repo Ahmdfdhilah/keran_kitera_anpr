@@ -95,7 +95,7 @@ def draw_prediction(classId, conf, left, top, right, bottom, frame, capture_coun
 
     if detected_conf > conf_threshold:
         save_image(frame)
-        save_ocr_result(f"detected_text: {detected_text}, detected_conf {detected_conf}")
+        save_ocr_result(f"detected_text: {detected_text}, detected_conf: {detected_conf}")
 
     return detected_text, detected_conf
 
