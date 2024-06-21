@@ -1,0 +1,7 @@
+__pycache__*/
+venv38/
+models/*
+result/
+db.py
+hikvision.py
+.DS_Store
