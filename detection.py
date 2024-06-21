@@ -33,7 +33,7 @@ def get_output_names(net):
     layersNames = net.getLayerNames()
     return [layersNames[i - 1] for i in net.getUnconnectedOutLayers()]
 
-def draw_prediction(classId, conf, left, top, right, bottom, frame, capture_counter):
+def draw_prediction(classId, conf, left, top, right, bottom, frame):
     cv.rectangle(frame, (left, top), (right, bottom), (255, 178, 50), 5)# Label with confidence
     label = '%.2f' % conf
     if classes:
@@ -100,7 +100,7 @@ def draw_prediction(classId, conf, left, top, right, bottom, frame, capture_coun
     return detected_text, detected_conf
 
 
-def process_frame(frame, capture_counter):
+def process_frame(frame):
     blob = cv.dnn.blobFromImage(frame, 1/255, (inp_width, inp_height), [0,0,0], 1, crop=False)
     net.setInput(blob)
     outs = net.forward(get_output_names(net))
@@ -128,7 +128,7 @@ def process_frame(frame, capture_counter):
         box = boxes[i]
         left, top, width, height = box[0], box[1], box[2], box[3]
         try:
-            draw_prediction(classIds[i], confidences[i], left, top, left + width, top + height, frame, capture_counter)
+            draw_prediction(classIds[i], confidences[i], left, top, left + width, top + height, frame)
         except Exception as e:
             print(e)
 

@@ -18,7 +18,7 @@ while True:
     
     key = cv2.waitKey(1) & 0xFF
     if key == ord('d'):
-        process_frame(frame, capture_counter)
+        process_frame(frame)
         capture_counter += 1
     
     elif key == ord('q'):
