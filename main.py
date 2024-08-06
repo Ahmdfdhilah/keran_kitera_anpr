@@ -10,21 +10,20 @@ from config.hikvision import ip_cam_url
 vs = VideoStream(src=ip_cam_url).start()
 print("[INFO] starting video stream...")
 
-capture_counter = 0
 
 while True:
     frame = vs.read()
-    frame = imutils.resize(frame, width=1000)
+
+    frame = imutils.resize(frame, width=1080)
     
     key = cv2.waitKey(1) & 0xFF
     if key == ord('d'):
         process_frame(frame)
-        capture_counter += 1
     
     elif key == ord('q'):
         break
 
-    process_frame(frame, capture_counter)
+    process_frame(frame)
 
     cv2.imshow("Frame", frame)
 

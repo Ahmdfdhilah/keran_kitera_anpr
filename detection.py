@@ -3,8 +3,6 @@ import cv2 as cv
 import numpy as np
 from datetime import datetime
 from easyocr import Reader
-# from db.postgresql import find_vehicle_id_by_number_plate
-# from db.redisdb import save_anpr_reading
 
 from config import (
     model_configuration,
@@ -19,6 +17,8 @@ from config import (
     inp_height
 )
 
+easyocr_reader = Reader(['en'])
+tesseract_config = '--oem 3 --psm 6'
 classes = None
 with open(classes_file, 'rt') as f:
     classes = f.read().rstrip('\n').split('\n')
@@ -89,12 +89,11 @@ def draw_prediction(classId, conf, left, top, right, bottom, frame):
                 (255,255,255),
                 2
             )
-            # vid = find_vehicle_id_by_number_plate(text)
-            # if vid:
-            #     save_anpr_reading(vid, text)
+            save_cropped_image(plate_region, text)
+            save_ocr_result(ocr_result)
 
     if detected_conf > conf_threshold:
-        save_image(frame)
+        save_cropped_image(plate_region, text)
         save_ocr_result(f"detected_text: {detected_text}, detected_conf: {detected_conf}")
 
     return detected_text, detected_conf
@@ -145,3 +144,9 @@ def save_ocr_result(ocr_result):
     f.write(str(ocr_result))
     f.close()
     print(f"OCR result saved as {filename}")
+
+def save_cropped_image(plate_region, detected_text):
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = os.path.join(result_path, f"{detected_text}_{timestamp}.jpg")
+    cv.imwrite(filename, plate_region)
+    print(f"Cropped image saved as {filename}")
