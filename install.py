@@ -42,11 +42,11 @@ if __name__ == "__main__":
     install_requirements()
 
     # 4. Download file model dari Google Drive
-    model_dest_path = os.path.join('model', model_file_name)
+    model_dest_path = os.path.join('models', model_file_name)
     download_file_from_gdrive(model_file_id, model_dest_path)
 
     # 5. Download file .weights dari Google Drive
-    weights_dest_path = os.path.join('model', weights_file_name)
+    weights_dest_path = os.path.join('models', weights_file_name)
     download_file_from_gdrive(weights_file_id, weights_dest_path)
 
     print("Setup completed successfully.")

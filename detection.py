@@ -34,7 +34,7 @@ def get_output_names(net):
     return [layersNames[i - 1] for i in net.getUnconnectedOutLayers()]
 
 def draw_prediction(classId, conf, left, top, right, bottom, frame):
-    cv.rectangle(frame, (left, top), (right, bottom), (255, 178, 50), 5)# Label with confidence
+    cv.rectangle(frame, (left, top), (right, bottom), (255, 178, 50), 5)
     label = '%.2f' % conf
     if classes:
         assert(classId < len(classes))
