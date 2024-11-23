@@ -30,7 +30,7 @@ class Settings(BaseModel):
     cameras: Dict[str, CameraConfig]
     anpr: ANPRConfig
     result_path: str = "result"
-    mqtt_broker: str = "el.itera.ac.id"
+    mqtt_broker: str = "localhost"
     mqtt_port: int = 1883
 
     model_config = {

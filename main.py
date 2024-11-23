@@ -74,6 +74,7 @@ class ANPRService:
     async def _process_message(self, message):
         try:
             topic_parts = message.topic.split('/')
+            payload = json.loads(message.payload.decode('utf-8'))
             if len(topic_parts) != 5 or topic_parts[0] != 'portal' or topic_parts[1] != 'anpr':
                 logger.error(f"Invalid topic format: {message.topic}")
                 return
@@ -81,29 +82,28 @@ class ANPRService:
             gate_id = topic_parts[2]
             direction = topic_parts[3]
             
-            try:
-                crfid = message.payload.decode('utf-8')
-            except:
-                crfid = None
-            
-            await self._process_anpr_request(gate_id, direction, crfid)
+            identifier = payload.get("identifier", "unknown")
+            error_message = payload.get("error_message", "")
+                
+       
+            await self._process_anpr_request(gate_id, direction, identifier, error_message)
             
         except Exception as e:
             logger.error(f"Error processing MQTT message: {e}")
             
-    async def _process_anpr_request(self, gate_id: str, direction: str, crfid: Optional[str]):
+    async def _process_anpr_request(self, gate_id: str, direction: str, identifier: Optional[str], error_message: Optional[str]):
         try:
             camera = self.camera_manager.get_camera(gate_id, direction)
             if not camera:
                 logger.error(f"No camera found for gate {gate_id} direction {direction}")
-                await self._publish_response(gate_id, direction, None, None, crfid)
+                await self._publish_response(gate_id, direction, None, None, identifier, error_message)
                 return
                 
             # Get frame from camera
             frame = await camera.get_frame(camera.config.resize_width)
             if frame is None:
                 logger.error(f"Failed to capture frame from camera {gate_id}-{direction}")
-                await self._publish_response(gate_id, direction, None, None, crfid)
+                await self._publish_response(gate_id, direction, None, None, identifier, error_message)
                 return
                 
             # Save frame and convert to base64
@@ -121,13 +121,14 @@ class ANPRService:
                 direction,
                 None,  # No plate text
                 None,  # No confidence
-                crfid,
+                identifier,
+                error_message,
                 image_base64
             )
                 
         except Exception as e:
             logger.error(f"Error processing ANPR request: {e}")
-            await self._publish_response(gate_id, direction, None, None, crfid)
+            await self._publish_response(gate_id, direction, None, None, identifier, error_message)
             
     async def _publish_response(
         self, 
@@ -135,17 +136,19 @@ class ANPRService:
         direction: str, 
         plate_text: Optional[str],
         confidence: Optional[float],
-        crfid: Optional[str],
+        identifier: Optional[str],
+        error_message: Optional[str],
         image: Optional[str] = None
     ):
         try:
             topic = f"portal/anpr/{gate_id}/{direction}/response"
             
             payload = {
-                "identifier": crfid if crfid else "",  
+                "identifier": identifier if identifier else "",  
                 "confidence": 0,  # No confidence as we skip ANPR
                 "timestamp": datetime.now().isoformat(),
-                "crfid": crfid,
+                "crfid": identifier,
+                "error_message": error_message,
                 "image": image,
             }
             
@@ -154,7 +157,7 @@ class ANPRService:
                 json.dumps(payload),
                 qos=self.qos_level
             )
-            logger.debug(f"Published ANPR response to {topic}")
+            logger.info(f"Published ANPR response to {topic}")
             
         except Exception as e:
             logger.error(f"Error publishing response: {e}")

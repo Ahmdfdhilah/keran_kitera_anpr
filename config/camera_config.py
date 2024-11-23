@@ -13,12 +13,12 @@ def get_camera_configs() -> Dict[str, dict]:
             "gate_id": "1",
             "direction": "in",
         },
-        "camera2": {
-            "name": "Gerbang Utama Motor Out",
-            "url": 0,
-            "username": "",
-            "password": "",
-            "gate_id": "1",
-            "direction": "out",
-    }
+    #     "camera2": {
+    #         "name": "Gerbang Utama Motor Out",
+    #         "url": 0,
+    #         "username": "",
+    #         "password": "",
+    #         "gate_id": "1",
+    #         "direction": "out",
+    # }
     }
