@@ -14,14 +14,12 @@ class CameraConfig(BaseModel):
     enabled: bool = True
 
 class ANPRConfig(BaseModel):
-    config_path: str = "models/yolov4-ANPR.cfg"  # Changed from model_path
-    weights_path: str = "models/yolov4-ANPR.weights"
-    names_path: str = "models/yolov4-ANPR.names"
-    conf_threshold: float = 0.9
-    nms_threshold: float = 0.3
-    input_width: int = 416
-    input_height: int = 416
-
+    model_path: str = "models/train_with_nms_timelimit_custom_best.pt"  # New YOLOv11 model
+    conf_threshold: float = 0.25  # Adjusted for YOLOv11
+    nms_threshold: float = 0.45   # Adjusted for YOLOv11
+    input_width: int = 640  # YOLOv11 default size
+    input_height: int = 640 # YOLOv11 default size
+    
     model_config = {
         'protected_namespaces': ()
     }
@@ -32,7 +30,7 @@ class Settings(BaseModel):
     result_path: str = "result"
     mqtt_broker: str = "localhost"
     mqtt_port: int = 1883
-
+    debug: bool = True
     model_config = {
         'protected_namespaces': ()
     }

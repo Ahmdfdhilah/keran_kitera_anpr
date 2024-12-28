@@ -5,3 +5,6 @@ result/
 db.py
 hikvision.py
 .DS_Store
+venv/
+path/*
+dataset/

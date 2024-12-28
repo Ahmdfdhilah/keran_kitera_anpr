@@ -11,13 +11,21 @@ from typing import Dict, Optional
 from camera_manager import CameraManager
 from config.settings import CameraConfig, Settings, ANPRConfig
 from config.camera_config import get_camera_configs
+from processor import ANPRProcessor
 # from processor import ANPRProcessor  # Commented out as we skip ANPR processing
 
+from video_test import VideoTester
+import argparse
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Change from INFO to DEBUG
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Set debug level for specific modules
+logging.getLogger('processor').setLevel(logging.DEBUG)
+logging.getLogger('video_test').setLevel(logging.DEBUG)
 
 class ANPRService:
     def __init__(self, settings: Settings):
@@ -28,7 +36,8 @@ class ANPRService:
         os.makedirs(self.settings.result_path, exist_ok=True)
         
         # Skip ANPR processor initialization
-        # self.processor = ANPRProcessor(settings)
+        self.processor = ANPRProcessor(settings)
+
         self.camera_manager = CameraManager()
         
         self.mqtt_client = mqtt.Client(protocol=mqtt.MQTTv5)
@@ -96,39 +105,70 @@ class ANPRService:
             camera = self.camera_manager.get_camera(gate_id, direction)
             if not camera:
                 logger.error(f"No camera found for gate {gate_id} direction {direction}")
-                await self._publish_response(gate_id, direction, None, None, identifier, error_message)
+                await self._publish_response(gate_id, direction, None, None, identifier, "Camera not found")
                 return
-                
+
             # Get frame from camera
-            frame = await camera.get_frame(camera.config.resize_width)
+            frame = await camera.get_frame()
             if frame is None:
-                logger.error(f"Failed to capture frame from camera {gate_id}-{direction}")
-                await self._publish_response(gate_id, direction, None, None, identifier, error_message)
+                logger.error(f"Failed to get frame from camera {gate_id} {direction}")
+                await self._publish_response(gate_id, direction, None, None, identifier, "Failed to get camera frame")
                 return
-                
-            # Save frame and convert to base64
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            frame_path = os.path.join(self.settings.result_path, f"{gate_id}_{direction}_{timestamp}.jpg")
-            cv2.imwrite(frame_path, frame)
-            
-            # Convert frame to base64
+
+            # Convert frame to base64 for documentation
             _, buffer = cv2.imencode('.jpg', frame)
             image_base64 = base64.b64encode(buffer).decode('utf-8')
+
+            # Process frame with YOLOv11
+            detections = await self.processor.process_frame(frame, f"{gate_id}_{direction}")
             
-            # Skip ANPR processing and just return the CRFID and image
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            result_data = {
+                "gate_id": gate_id,
+                "direction": direction,
+                "timestamp": timestamp,
+                "image": image_base64,
+                "identifier": identifier
+            }
+
+            if detections:
+                best_detection = max(detections, key=lambda x: x['confidence'])
+                plate_text = best_detection['text']
+                confidence = best_detection['confidence']
+                
+                result_data.update({
+                    "plate_number": plate_text,
+                    "confidence": confidence,
+                    "status": "success"
+                })
+
+                logger.info(f"Plate detected at {gate_id}_{direction}: {plate_text} (conf: {confidence:.2f})")
+            else:
+                result_data.update({
+                    "plate_number": None,
+                    "confidence": None,
+                    "status": "no_plate_detected"
+                })
+                logger.warning(f"No plate detected at {gate_id}_{direction}")
+
+            # Save result and publish
+            result_path = os.path.join(self.settings.result_path, f"{timestamp}_{gate_id}_{direction}.json")
+            with open(result_path, 'w') as f:
+                json.dump(result_data, f)
+
             await self._publish_response(
                 gate_id, 
-                direction,
-                None,  # No plate text
-                None,  # No confidence
+                direction, 
+                result_data["plate_number"],
+                result_data["confidence"],
                 identifier,
-                error_message,
+                error_message if error_message else None,
                 image_base64
             )
-                
+
         except Exception as e:
             logger.error(f"Error processing ANPR request: {e}")
-            await self._publish_response(gate_id, direction, None, None, identifier, error_message)
+            await self._publish_response(gate_id, direction, None, None, identifier, str(e))
             
     async def _publish_response(
         self, 
@@ -192,6 +232,12 @@ class ANPRService:
 
 if __name__ == "__main__":
     try:
+        # Add argument parser
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--test", help="Run in test mode with video file", type=str)
+        args = parser.parse_args()
+
+        # Initialize settings
         camera_configs = get_camera_configs()
         settings = Settings(
             cameras={
@@ -200,12 +246,16 @@ if __name__ == "__main__":
             },
             anpr=ANPRConfig()
         )
-        
-        service = ANPRService(settings)
-        
-        logger.info("Starting ANPR Service...")
-        asyncio.run(service.start())
-        
+
+        if args.test:
+            logger.info("Starting Video Test Mode...")
+            tester = VideoTester(settings)
+            asyncio.run(tester.run_test(args.test))
+        else:
+            logger.info("Starting ANPR Service...")
+            service = ANPRService(settings)
+            asyncio.run(service.start())
+
     except KeyboardInterrupt:
         logger.info("Received shutdown signal")
     except Exception as e:
