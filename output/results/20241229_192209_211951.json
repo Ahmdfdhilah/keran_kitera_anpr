@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T19:22:09.472216",
+  "plate_number": "39L0",
+  "confidence": 0.8536388940007968,
+  "detection_confidence": 0.879534900188446,
+  "bbox": [
+    1098,
+    549,
+    1172,
+    585
+  ],
+  "crop_path": "output\\crops\\20241229_192209_211951_39L0_0.85.jpg"
+}

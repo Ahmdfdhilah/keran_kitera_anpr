@@ -5,228 +5,283 @@ from easyocr import Reader
 import asyncio
 import logging
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
 import os
-
+from PIL import Image, ImageEnhance
+from dataclasses import dataclass
+from typing import Optional, List, Tuple, Dict
+import json
 from ultralytics import YOLO
-from config.settings import Settings
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("anpr.log"), logging.StreamHandler()],
+)
 logger = logging.getLogger(__name__)
 
+@dataclass
+class Parameters:
+    """Configuration parameters for ANPR system"""
+    # Model parameters
+    imgsz: int = 640
+    conf_thres: float = 0.25
+    max_det: int = 1000
+    model_path: str = "models/train_with_nms_timelimit_custom_best.pt"
+
+    # OCR parameters optimized for license plates
+    min_text_length: int = 3
+    min_ocr_confidence: float = 0.3
+    allowlist: str = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
+
+    # EasyOCR specific parameters
+    canvas_size: int = 2560
+    mag_ratio: float = 1.0
+    text_threshold: float = 0.7
+    link_threshold: float = 0.4
+    low_text: float = 0.4
+    slope_ths: float = 0.1
+    ycenter_ths: float = 0.5
+    height_ths: float = 0.5
+    width_ths: float = 0.5
+    add_margin: float = 0.1
+
+    # Image processing parameters
+    target_height: int = 64  # Optimized for license plate height
+    contrast_factor: float = 1.5
+    sharpness_factor: float = 1.5
+    clahe_clip_limit: float = 2.0
+    clahe_grid_size: Tuple[int, int] = (8, 8)
+
+    # Visualization parameters
+    color_blue: Tuple[int, int, int] = (255, 255, 0)
+    color_red: Tuple[int, int, int] = (25, 20, 240)
+    font_scale: float = 0.7
+    thickness: int = 2
+    rect_thickness: int = 3
+
+    device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+class LicensePlateOCR:
+    """Enhanced OCR processing using EasyOCR techniques"""
+
+    def __init__(self, params: Parameters):
+        self.params = params
+        self.reader = Reader(
+            ["en"],
+            gpu=torch.cuda.is_available(),
+            model_storage_directory="./models",
+            download_enabled=True,
+            recog_network="english_g2",
+            detect_network="craft",  # Using CRAFT for better text detection
+            quantize=True  # Enable quantization for better performance
+        )
+        self.debug_dir = "debug_images"
+        os.makedirs(self.debug_dir, exist_ok=True)
+
+    def preprocess_plate(self, plate_region: np.ndarray, plate_id: str) -> List[np.ndarray]:
+        """Enhanced preprocessing pipeline based on EasyOCR techniques"""
+        try:
+            # Resize with maintained aspect ratio
+            aspect_ratio = plate_region.shape[1] / plate_region.shape[0]
+            target_width = int(self.params.target_height * aspect_ratio)
+            resized = cv2.resize(plate_region, (target_width, self.params.target_height))
+
+            # Convert to grayscale
+            gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+
+            # Apply CLAHE
+            clahe = cv2.createCLAHE(
+                clipLimit=self.params.clahe_clip_limit,
+                tileGridSize=self.params.clahe_grid_size
+            )
+            equalized = clahe.apply(gray)
+
+            # Create multiple processing variations
+            processed_images = []
+
+            # Original equalized
+            processed_images.append(cv2.cvtColor(equalized, cv2.COLOR_GRAY2RGB))
+
+            # Otsu thresholding
+            _, binary_otsu = cv2.threshold(equalized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            processed_images.append(cv2.cvtColor(binary_otsu, cv2.COLOR_GRAY2RGB))
+
+            # Adaptive thresholding
+            adaptive = cv2.adaptiveThreshold(
+                equalized, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            )
+            processed_images.append(cv2.cvtColor(adaptive, cv2.COLOR_GRAY2RGB))
+
+            # Enhanced contrast version
+            pil_img = Image.fromarray(equalized)
+            enhancer = ImageEnhance.Contrast(pil_img)
+            contrast_img = enhancer.enhance(self.params.contrast_factor)
+            processed_images.append(cv2.cvtColor(np.array(contrast_img), cv2.COLOR_RGB2BGR))
+
+            # Save debug images
+            debug_path = os.path.join(self.debug_dir, f"plate_{plate_id}")
+            os.makedirs(debug_path, exist_ok=True)
+
+            for idx, img in enumerate(processed_images):
+                cv2.imwrite(os.path.join(debug_path, f"variation_{idx}.jpg"), img)
+
+            return processed_images
+
+        except Exception as e:
+            logger.error(f"Preprocessing error: {str(e)}")
+            return [cv2.cvtColor(plate_region, cv2.COLOR_BGR2RGB)]
+
+    def recognize_plate(self, image: np.ndarray, plate_id: str) -> List[Tuple[str, float]]:
+        """Improved OCR using EasyOCR techniques"""
+        try:
+            all_results = []
+            image_variations = self.preprocess_plate(image, plate_id)
+
+            for img_variant in image_variations:
+                # Using EasyOCR's advanced parameters
+                results = self.reader.readtext(
+                    img_variant,
+                    decoder='beamsearch',
+                    beamWidth=5,
+                    batch_size=1,
+                    workers=0,
+                    allowlist=self.params.allowlist,
+                    paragraph=False,
+                    contrast_ths=0.1,
+                    adjust_contrast=0.5,
+                    text_threshold=self.params.text_threshold,
+                    low_text=self.params.low_text,
+                    link_threshold=self.params.link_threshold,
+                    canvas_size=self.params.canvas_size,
+                    mag_ratio=self.params.mag_ratio,
+                    slope_ths=self.params.slope_ths,
+                    ycenter_ths=self.params.ycenter_ths,
+                    height_ths=self.params.height_ths,
+                    width_ths=self.params.width_ths,
+                    add_margin=self.params.add_margin
+                )
+
+                for bbox, text, conf in results:
+                    if len(text) >= self.params.min_text_length and conf >= self.params.min_ocr_confidence:
+                        # Clean and format the text
+                        cleaned_text = ''.join(c for c in text if c in self.params.allowlist)
+                        if cleaned_text:
+                            all_results.append((cleaned_text, conf))
+
+            # Sort by confidence and remove duplicates
+            unique_results = []
+            seen_texts = set()
+
+            # Sort results by confidence
+            sorted_results = sorted(all_results, key=lambda x: x[1], reverse=True)
+
+            for text, conf in sorted_results:
+                if text not in seen_texts:
+                    seen_texts.add(text)
+                    unique_results.append((text, conf))
+
+            if unique_results:
+                logger.info(f"OCR results for plate {plate_id}: {unique_results}")
+            else:
+                logger.warning(f"No valid OCR results for plate {plate_id}")
+
+            return unique_results
+
+        except Exception as e:
+            logger.error(f"OCR error for plate {plate_id}: {str(e)}")
+            return []
+
 class ANPRProcessor:
-    def __init__(self, settings: Settings):
-        self.settings = settings        
-        # Load YOLOv11 model
-        # self.model = torch.hub.load('ultralytics/yolov5', 'custom', 
-        #                           path=settings.anpr.model_path, force_reload=True, trust_repo=True)
+    """Main ANPR processing class"""
 
-        self.model = YOLO(settings.anpr.model_path)
-        
-        # Configure model settings
-        self.model.conf = settings.anpr.conf_threshold
-        self.model.iou = settings.anpr.nms_threshold
-        
-        # Use CUDA if available
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.model.to(self.device)
-        
-        self.reader = Reader(['en'], gpu=torch.cuda.is_available())
-        self.executor = ThreadPoolExecutor(max_workers=len(settings.cameras))
+    def __init__(self, settings: Dict):
+        self.settings = settings
+        self.params = Parameters()
+        self.model = self.load_model()
+        self.ocr_processor = LicensePlateOCR(self.params)
+        self.setup_directories()
 
+    def load_model(self) -> YOLO:
+        model = YOLO(self.params.model_path)
+        model.conf = self.params.conf_thres
+        model.max_det = self.params.max_det
+        model.to(self.params.device)
+        return model
 
-    async def process_frame(self, frame, camera_id: str):
+    def setup_directories(self):
+        self.output_dir = "output"
+        self.crops_dir = os.path.join(self.output_dir, "crops")
+        self.results_dir = os.path.join(self.output_dir, "results")
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.crops_dir, exist_ok=True)
+        os.makedirs(self.results_dir, exist_ok=True)
+
+    def save_result(self, result: Dict, image: np.ndarray, plate_id: str):
+        crop_path = os.path.join(
+            self.crops_dir,
+            f"{plate_id}_{result['plate_number']}_{result['confidence']:.2f}.jpg"
+        )
+        cv2.imwrite(crop_path, image)
+        
+        result["crop_path"] = crop_path
+        result_path = os.path.join(self.results_dir, f"{plate_id}.json")
+        with open(result_path, "w") as f:
+            json.dump(result, f, indent=2)
+
+    async def process_frame(self, frame: np.ndarray) -> List[Dict]:
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.model(frame_rgb)
-        return await self._process_detections(results[0], frame, camera_id)
+        return await self._process_detections(results[0], frame)
 
-    async def _process_detections(self, result, frame, camera_id):
+    async def _process_detections(self, result, frame: np.ndarray) -> List[Dict]:
         detected_plates = []
-        
-        if len(result.boxes) > 0:
-            box = result.boxes[0]  # Take first detection only
-            
-            if box.conf[0] >= self.settings.anpr.conf_threshold:
-                # Get coordinates with padding
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                height, width = frame.shape[:2]
-                pad_x = int((x2 - x1) * 0.1)
-                pad_y = int((y2 - y1) * 0.1)
-                
-                # Ensure coordinates are within bounds
-                x1 = max(0, x1 - pad_x)
-                y1 = max(0, y1 - pad_y)
-                x2 = min(width, x2 + pad_x)
-                y2 = min(height, y2 + pad_y)
-                
-                # Crop the plate region
-                plate_region = frame[y1:y2, x1:x2].copy()
-                
-                # Process the plate for OCR
-                processed_plate = self._preprocess_plate(plate_region)
-                
-                # Perform OCR on the processed plate image
-                ocr_result = self.reader.readtext(processed_plate)
-                
-                if self.settings.debug:
-                    timestamp = datetime.now().strftime('%H%M%S')
-                    # Save both original and processed plates
-                    original_path = os.path.join(
-                        self.settings.result_path,
-                        f"plate_original_{camera_id}_{timestamp}.jpg"
-                    )
-                    processed_path = os.path.join(
-                        self.settings.result_path,
-                        f"plate_processed_{camera_id}_{timestamp}.jpg"
-                    )
-                    cv2.imwrite(original_path, plate_region)
-                    cv2.imwrite(processed_path, processed_plate)
-                    logger.debug(f"Original plate saved: {original_path}")
-                    logger.debug(f"Processed plate saved: {processed_path}")
-                    logger.debug(f"OCR results: {ocr_result}")
-                
-                # Process OCR results
-                if ocr_result:
-                    best_ocr = max(ocr_result, key=lambda x: x[2])
-                    text = best_ocr[1].upper().strip()
-                    
-                    if len(text) >= 4:
-                        detected_plates.append({
-                            'text': text,
-                            'confidence': best_ocr[2],
-                            'bbox': (x1, y1, x2, y2),
-                            'plate_image': processed_plate  # Change this to return processed image
-                        })
-        
+
+        for box in result.boxes:
+            if box.cls[0].item() == 2 and box.conf[0].item() >= self.params.conf_thres:
+                try:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    plate_region = frame[y1:y2, x1:x2].copy()
+                    if plate_region.size == 0:
+                        continue
+
+                    plate_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    ocr_results = self.ocr_processor.recognize_plate(plate_region, plate_id)
+
+                    if ocr_results:
+                        plate_text, confidence = ocr_results[0]
+                        result = {
+                            "timestamp": datetime.now().isoformat(),
+                            "plate_number": plate_text,
+                            "confidence": float(confidence),
+                            "detection_confidence": float(box.conf[0]),
+                            "bbox": [int(x1), int(y1), int(x2), int(y2)],
+                        }
+
+                        self.save_result(result, plate_region, plate_id)
+                        detected_plates.append(result)
+
+                        # Draw detection results
+                        cv2.rectangle(
+                            frame,
+                            (x1, y1),
+                            (x2, y2),
+                            self.params.color_blue,
+                            self.params.rect_thickness,
+                        )
+                        cv2.putText(
+                            frame,
+                            f"{plate_text} ({confidence:.2f})",
+                            (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            self.params.font_scale,
+                            self.params.color_blue,
+                            self.params.thickness,
+                        )
+
+                        logger.info(f"Detected plate: {plate_text} with confidence: {confidence:.2f}")
+
+                except Exception as e:
+                    logger.error(f"Error processing detection: {str(e)}")
+
         return detected_plates
-
-    def _preprocess_plate(self, plate_region):
-        """Preprocess the plate image for better OCR results"""
-        # Resize (upscale)
-        processed = cv2.resize(plate_region, (0, 0), fx=2, fy=2)
-        # Convert to grayscale
-        processed = cv2.cvtColor(processed, cv2.COLOR_BGR2GRAY)
-        # Enhance contrast
-        processed = cv2.equalizeHist(processed)
-        return processed
-
-    def _save_debug_images(self, original_plate, processed_plate, ocr_result, camera_id):
-        """
-        Save both original and processed plates for debugging
-        """
-        timestamp = datetime.now().strftime('%H%M%S')
-        debug_dir = self.settings.result_path
-        
-        # Save original cropped plate
-        original_path = os.path.join(
-            debug_dir,
-            f"plate_original_{camera_id}_{timestamp}.jpg"
-        )
-        cv2.imwrite(original_path, original_plate)
-        
-        # Save processed plate
-        processed_path = os.path.join(
-            debug_dir,
-            f"plate_processed_{camera_id}_{timestamp}.jpg"
-        )
-        cv2.imwrite(processed_path, processed_plate)
-        
-        logger.debug(f"Original plate saved: {original_path}")
-        logger.debug(f"Processed plate saved: {processed_path}")
-        logger.debug(f"OCR results: {ocr_result}")
-
-    def _process_ocr_results(self, ocr_result, x1, y1, x2, y2):
-        """
-        Process OCR results and return the best plate information
-        """
-        if not ocr_result:
-            return None
-        
-        # Get the best result based on confidence
-        best_ocr = max(ocr_result, key=lambda x: x[2])
-        text = best_ocr[1].upper().strip()
-        
-        # Only return results that meet minimum length requirement
-        if len(text) >= 4:
-            return {
-                'text': text,
-                'confidence': best_ocr[2],
-                'bbox': (x1, y1, x2, y2)
-            }
-        
-        return None
-    # async def _process_plate(self, frame, conf, x1, y1, x2, y2, camera_id):
-    #     try:
-    #         # Extract plate region with padding
-    #         height, width = frame.shape[:2]
-    #         pad_x = int((x2 - x1) * 0.1)  # 10% padding
-    #         pad_y = int((y2 - y1) * 0.1)
-            
-    #         # Ensure coordinates are within frame bounds
-    #         x1 = max(0, x1 - pad_x)
-    #         y1 = max(0, y1 - pad_y)
-    #         x2 = min(width, x2 + pad_x)
-    #         y2 = min(height, y2 + pad_y)
-            
-    #         # Extract and process plate region
-    #         plate_region = frame[y1:y2, x1:x2]
-            
-    #         # Process the cropped plate image
-    #         processed_plate = cv2.resize(plate_region, (0, 0), fx=2, fy=2)  # Upscale
-    #         processed_plate = cv2.cvtColor(processed_plate, cv2.COLOR_BGR2GRAY)
-    #         processed_plate = cv2.equalizeHist(processed_plate)  # Enhance contrast
-            
-    #         # Save ONLY the processed and cropped plate for debugging
-    #         if self.settings.debug:
-    #             debug_path = os.path.join(self.settings.result_path, 
-    #                                     f"plate_debug_{camera_id}_{datetime.now().strftime('%H%M%S')}.jpg")
-    #             cv2.imwrite(debug_path, processed_plate)
-    #             logger.debug(f"Saved cropped and processed plate image: {debug_path}")
-            
-    #         # Perform OCR ONLY on the processed plate image
-    #         ocr_result = self.reader.readtext(processed_plate)
-            
-    #         if self.settings.debug:
-    #             logger.debug(f"OCR results for cropped plate: {ocr_result}")
-            
-    #         if ocr_result and len(ocr_result) > 0:
-    #             # Get the result that covers the largest area of the image
-    #             best_result = max(ocr_result, key=lambda x: (
-    #                 (x[0][2][0] - x[0][0][0]) * (x[0][2][1] - x[0][0][1])  # Area calculation
-    #                 if len(x) >= 3 else 0
-    #             ))
-                
-    #             if len(best_result) >= 3 and best_result[2] > 0.15:  # Lowered threshold since we're using area
-    #                 text = best_result[1].upper().strip()
-    #                 return {
-    #                     'text': text,
-    #                     'confidence': best_result[2],
-    #                     'bbox': (x1, y1, x2, y2)
-    #                 }
-            
-    #         return None
-            
-    #     except Exception as e:
-    #         logger.error(f"Error processing plate region: {e}", exc_info=True)
-    #         return None
-    
-    def _get_output_names(self):
-        layersNames = self.net.getLayerNames()
-        return [layersNames[i - 1] for i in self.net.getUnconnectedOutLayers()]
-
-    async def _save_results(self, plate_region, text, conf, camera_id, timestamp):
-        # Ensure result directory exists
-        os.makedirs(self.settings.result_path, exist_ok=True)
-        
-        # Save cropped plate image
-        timestamp_str = timestamp.strftime("%Y-%m-%d_%H-%M-%S")
-        image_filename = f"{camera_id}_{text}_{timestamp_str}.jpg"
-        image_path = os.path.join(self.settings.result_path, image_filename)
-        
-        cv2.imwrite(image_path, plate_region)
-        
-        # Save OCR result
-        ocr_filename = f"{camera_id}_{text}_{timestamp_str}.txt"
-        ocr_path = os.path.join(self.settings.result_path, ocr_filename)
-        
-        with open(ocr_path, 'w') as f:
-            f.write(f"Plate: {text}\nConfidence: {conf}\nTimestamp: {timestamp}")

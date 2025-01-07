@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T14:50:09.624339",
+  "plate_number": "BEZ667",
+  "confidence": 0.3696948300730162,
+  "detection_confidence": 0.9139404892921448,
+  "bbox": [
+    941,
+    664,
+    1062,
+    719
+  ],
+  "crop_path": "output\\crops\\20241229_145009_427759_BEZ667_0.37.jpg"
+}

@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T14:50:08.980858",
+  "plate_number": "BEI26677I",
+  "confidence": 0.5822363327132344,
+  "detection_confidence": 0.8827046751976013,
+  "bbox": [
+    729,
+    586,
+    818,
+    623
+  ],
+  "crop_path": "output\\crops\\20241229_145008_476161_BEI26677I_0.58.jpg"
+}

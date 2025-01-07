@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T14:51:21.859744",
+  "plate_number": "O783",
+  "confidence": 0.3238799273967743,
+  "detection_confidence": 0.8607898354530334,
+  "bbox": [
+    1123,
+    552,
+    1201,
+    591
+  ],
+  "crop_path": "output\\crops\\20241229_145121_566827_O783_0.32.jpg"
+}

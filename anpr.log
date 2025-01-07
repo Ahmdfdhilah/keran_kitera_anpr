@@ -1,0 +1,222 @@
+2024-12-29 14:34:57,891 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 14:34:58,553 - __main__ - ERROR - Fatal error: [Errno 2] No such file or directory: 'models\\best.pt'
+2024-12-29 14:35:42,589 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 14:35:42,919 - easyocr.easyocr - WARNING - Downloading detection model, please wait. This may take several minutes depending upon your network connection.
+2024-12-29 14:36:12,026 - easyocr.easyocr - INFO - Download complete
+2024-12-29 14:36:12,027 - easyocr.easyocr - WARNING - Downloading recognition model, please wait. This may take several minutes depending upon your network connection.
+2024-12-29 14:36:18,867 - easyocr.easyocr - INFO - Download complete.
+2024-12-29 14:36:31,721 - video_test - WARNING - No plate detected
+2024-12-29 14:36:44,652 - video_test - WARNING - No plate detected
+2024-12-29 14:36:49,623 - video_test - WARNING - No plate detected
+2024-12-29 14:37:09,977 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 14:37:23,679 - video_test - WARNING - No plate detected
+2024-12-29 14:37:24,564 - video_test - WARNING - No plate detected
+2024-12-29 14:37:24,984 - video_test - WARNING - No plate detected
+2024-12-29 14:47:57,753 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 14:48:11,421 - processor - INFO - OCR results for plate 20241229_144810_873614: [('OEI2664O', 0.3502806041207558), ('PEI2664O', 0.32135362582468147)]
+2024-12-29 14:48:11,427 - processor - INFO - Detected plate: OEI2664O with confidence: 0.35
+2024-12-29 14:48:11,436 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 14:48:11,890 - processor - INFO - OCR results for plate 20241229_144811_748529: [('O5I28OW', 0.3577650611547058), ('BEI2662O', 0.2629088995516546)]
+2024-12-29 14:48:11,892 - processor - INFO - Detected plate: O5I28OW with confidence: 0.36
+2024-12-29 14:48:11,892 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 14:48:12,401 - processor - WARNING - No valid OCR results for plate 20241229_144812_238911
+2024-12-29 14:48:12,403 - video_test - WARNING - No plate detected
+2024-12-29 14:49:44,023 - __main__ - INFO - Received shutdown signal
+2024-12-29 14:49:55,665 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 14:50:08,979 - processor - INFO - OCR results for plate 20241229_145008_476161: [('BEI26677I', 0.5822363327132344), ('BEI26677IO', 0.3193318733038228), ('BEI2667II', 0.310475729525776), ('B266', 0.2252563089132309)]
+2024-12-29 14:50:08,989 - processor - INFO - Detected plate: BEI26677I with confidence: 0.58
+2024-12-29 14:50:08,998 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 14:50:09,611 - processor - INFO - OCR results for plate 20241229_145009_427759: [('BEZ667', 0.3696948300730162), ('BE26E7O', 0.27138897425571823), ('BE2664O', 0.2362784622586945)]
+2024-12-29 14:50:09,627 - processor - INFO - Detected plate: BEZ667 with confidence: 0.37
+2024-12-29 14:50:09,628 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 14:50:10,054 - processor - WARNING - No valid OCR results for plate 20241229_145009_910303
+2024-12-29 14:50:10,055 - video_test - WARNING - No plate detected
+2024-12-29 14:51:18,495 - processor - WARNING - No valid OCR results for plate 20241229_145118_262337
+2024-12-29 14:51:18,496 - video_test - WARNING - No plate detected
+2024-12-29 14:51:21,858 - processor - INFO - OCR results for plate 20241229_145121_566827: [('O783', 0.3238799273967743), ('O2783', 0.2550377717823219)]
+2024-12-29 14:51:21,862 - processor - INFO - Detected plate: O783 with confidence: 0.32
+2024-12-29 14:51:21,862 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 14:51:24,350 - processor - INFO - OCR results for plate 20241229_145124_031733: [('AZE5', 0.35200753808021545)]
+2024-12-29 14:51:24,410 - processor - INFO - Detected plate: AZE5 with confidence: 0.35
+2024-12-29 14:51:24,411 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 14:51:59,472 - __main__ - INFO - Received shutdown signal
+2024-12-29 18:25:34,561 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 18:25:35,180 - __main__ - ERROR - Fatal error: Reader.__init__() got an unexpected keyword argument 'paragraph'
+2024-12-29 18:27:19,243 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 18:27:56,675 - processor - INFO - OCR results for plate 20241229_182755_070670: [('66 BEIZ 4 O', 0.371391750893243), ('66 BEIZ 4 IO', 0.24474143505901566), ('66 BIZ 4 O', 0.2278784501899154), ('BEIZ66O', 0.51668560836173), ('BE4IZ664O', 0.31346753845531594), ('OE4IZ664O', 0.2711428068367621), ('BEZ664O', 0.26308710672274754), ('OEIZ664O', 0.25950423462712585), ('466 BEIZ MO', 0.2296102907925205), ('IIZ663', 0.22832318506044544), ('OSIZ663', 0.21191070388122807)]
+2024-12-29 18:27:56,686 - processor - INFO - Detected plate: 66 BEIZ 4 O with confidence: 0.37
+2024-12-29 18:27:56,697 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 18:28:16,692 - processor - INFO - OCR results for plate 20241229_182815_703774: [('IB 69 IZ PYGH', 0.4778031868835625), ('I 69 IZ PYG', 0.4471498845185925), ('B 69 IZ PYGH', 0.3738258864156194), ('IB 69 IZ 7 PYG', 0.3527716931862272), ('IB 69 IZ PYG', 0.2828129488726434), ('7 I 69 IZ PYG', 0.25548219666694966), ('769 IOIZ PYG', 0.5636798256934105), ('769 IIZ PYL', 0.4807845871970031), ('769 IOIZ PYL', 0.4263908169307981), ('IOGZ9IV', 0.2503423863950361), ('769 IIZ PYG', 0.24806391250724655), ('I46Z9II', 0.23436807687847433), ('IO6Z9I7OI', 0.23325212159932956)]
+2024-12-29 18:28:16,698 - processor - INFO - Detected plate: IB 69 IZ PYGH with confidence: 0.48
+2024-12-29 18:28:16,699 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 18:28:59,965 - __main__ - INFO - Received shutdown signal
+2024-12-29 18:29:17,579 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 18:29:38,081 - processor - INFO - OCR results for plate 20241229_182936_651592: [('66 BEIZ 4 B', 0.30720212423955506), ('6 BEIZE 4 OB', 0.23486028617060117), ('6 BEIZE 4 B', 0.16194720679864444), ('BEIZ6674B', 0.7164641856755485), ('BEIZ667I4B', 0.6154011487758275), ('BEIZ667I4O', 0.37799878638256207), ('BEIZ667IO', 0.3628938650270767), ('BENIZ667I4B', 0.2634492127715203), ('BEIZ6674IO', 0.24023138700314672)]
+2024-12-29 18:29:38,092 - processor - INFO - Detected plate: 66 BEIZ 4 B with confidence: 0.31
+2024-12-29 18:29:38,100 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 18:29:54,910 - processor - INFO - OCR results for plate 20241229_182953_624163: [('434', 0.5050226618164938), ('E44', 0.4016175839944939), ('EZ4', 0.3614731465889012), ('EQ4', 0.269438583890823), ('6Z4', 0.2134940495142027), ('EZ3', 0.19454369719251338)]
+2024-12-29 18:29:54,924 - processor - INFO - Detected plate: 434 with confidence: 0.51
+2024-12-29 18:29:54,925 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 18:30:00,481 - processor - INFO - OCR results for plate 20241229_182959_553962: [('I 69 IZ PYGJ', 0.88815179241984), ('I 69 IZ PYG', 0.7299048408962217), ('B 69 IZ PYG', 0.6452395705012214), ('IB 69 IZ PYGJ', 0.511008110468592), ('I 69 IZ 7 PYG', 0.5100012148072437), ('IB 69 IZ PYG', 0.49469351692668), ('69 IIZ PYGL', 0.4804197565924305), ('I 69 IZ PYGL', 0.47374471644640886), ('IB 69 IZ 7 PYG', 0.4255547233568514), ('I 769 Z PYGL', 0.3475764403570621), ('II6ZZI', 0.6173946187177749), ('II6ZZI7', 0.4917686026164341), ('IOI6ZZBBO7', 0.2729245541183317)]
+2024-12-29 18:30:00,487 - processor - INFO - Detected plate: I 69 IZ PYGJ with confidence: 0.89
+2024-12-29 18:30:00,488 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 18:30:30,164 - processor - INFO - OCR results for plate 20241229_183029_020204: [('4 FIZB 6 ZI', 0.7917093237828414), ('34 FIZB 6 Z', 0.5151912624064203), ('E IZB 6 LI', 0.18983994638581966), ('EI 6 L', 0.18530872416926228), ('7 FIZB 6 LI', 0.17028066336002212), ('EIZB 6 L', 0.42224283625668313), ('EIB 64', 0.2678730759833812), ('FIZBT 6 LI', 0.19131181324005814), ('FEZB3O', 0.15362948611312544)]
+2024-12-29 18:30:30,173 - processor - INFO - Detected plate: 4 FIZB 6 ZI with confidence: 0.79
+2024-12-29 18:30:30,174 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:17:21,583 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 19:17:43,072 - processor - INFO - OCR results for plate 20241229_191741_992364: [('1266 418', 0.4009860226806334)]
+2024-12-29 19:17:43,084 - processor - INFO - Detected plate: 1266 418 with confidence: 0.40
+2024-12-29 19:17:43,095 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:18:05,551 - processor - INFO - OCR results for plate 20241229_191804_951062: [('1629', 0.9988651275634766), ('PYG', 0.9927586731980103)]
+2024-12-29 19:18:05,560 - processor - INFO - Detected plate: 1629 with confidence: 1.00
+2024-12-29 19:18:05,570 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:18:58,684 - processor - INFO - OCR results for plate 20241229_191858_344485: [('3920 USO', 0.552394335282376), ('3940', 0.47768259048461914), ('US9', 0.39492634525776615), ('3920 USOE', 0.3503437463672379)]
+2024-12-29 19:18:58,689 - processor - INFO - Detected plate: 3920 USO with confidence: 0.55
+2024-12-29 19:18:58,691 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:19:34,409 - processor - INFO - OCR results for plate 20241229_191934_197584: [('BE 35758', 0.565335438757624), ('BE 35134', 0.32068376648138547)]
+2024-12-29 19:19:34,413 - processor - INFO - Detected plate: BE 35758 with confidence: 0.57
+2024-12-29 19:19:34,413 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:19:58,029 - video_test - WARNING - No plate detected
+2024-12-29 19:20:33,455 - __main__ - INFO - Starting Video Test Mode...
+2024-12-29 19:20:46,292 - video_test - WARNING - No plate detected
+2024-12-29 19:20:54,727 - processor - INFO - OCR results for plate 20241229_192053_910611: [('02 20', 0.5704315954839491), ('BEN', 0.5238321517806064), ('BEZEE', 0.38817496960955694), ('BE31266 A8', 0.3410889583974201)]
+2024-12-29 19:20:54,736 - processor - INFO - Detected plate: 02 20 with confidence: 0.57
+2024-12-29 19:20:54,737 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:21:08,202 - video_test - WARNING - No plate detected
+2024-12-29 19:21:13,373 - processor - INFO - OCR results for plate 20241229_192113_106984: [('PYG', 0.9847410346436667), ('1629', 0.9841234087944031), ('1629 PYG', 0.9625841239081006), ('716291P1G', 0.5551860749337679), ('18 1629 PY6', 0.3828435760407421)]
+2024-12-29 19:21:13,379 - processor - INFO - Detected plate: PYG with confidence: 0.98
+2024-12-29 19:21:13,379 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:22:07,695 - processor - INFO - OCR results for plate 20241229_192207_272240: [('39L0 U59', 0.6991555758798735), ('3940 U50', 0.5965224304632356), ('39L0', 0.4836438298225403)]
+2024-12-29 19:22:07,700 - processor - INFO - Detected plate: 39L0 U59 with confidence: 0.70
+2024-12-29 19:22:07,700 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:22:08,071 - processor - INFO - OCR results for plate 20241229_192207_767285: [('0J4', 0.5615700001140389), ('J9L0 USA', 0.5154148516482562), ('3940 U50', 0.4634427047450363), ('39L0 U50', 0.39252728478822574)]
+2024-12-29 19:22:08,076 - processor - INFO - Detected plate: 0J4 with confidence: 0.56
+2024-12-29 19:22:08,077 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:22:08,456 - processor - WARNING - No valid OCR results for plate 20241229_192208_128721
+2024-12-29 19:22:08,457 - video_test - WARNING - No plate detected
+2024-12-29 19:22:08,811 - processor - INFO - OCR results for plate 20241229_192208_519530: [('059', 0.6973046985345561), ('3940 U59', 0.343483105057489)]
+2024-12-29 19:22:08,816 - processor - INFO - Detected plate: 059 with confidence: 0.70
+2024-12-29 19:22:08,816 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:22:09,151 - processor - INFO - OCR results for plate 20241229_192208_886341: [('01 24', 0.4845048841125551), ('039404454', 0.38279702425840184), ('3920 US9', 0.37222877300687)]
+2024-12-29 19:22:09,155 - processor - INFO - Detected plate: 01 24 with confidence: 0.48
+2024-12-29 19:22:09,156 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:22:09,471 - processor - INFO - OCR results for plate 20241229_192209_211951: [('39L0', 0.8536388940007968), ('012', 0.48405730006763587), ('8 3920 USO', 0.3712866740482821)]
+2024-12-29 19:22:09,476 - processor - INFO - Detected plate: 39L0 with confidence: 0.85
+2024-12-29 19:22:09,478 - video_test - ERROR - Error processing test frame: 'text'
+Traceback (most recent call last):
+  File "C:\Users\Lenovo\Documents\keran_kitera_anpr\video_test.py", line 55, in _process_test_frame
+    f"plate_{best_detection['text']}_{timestamp}.jpg"
+             ~~~~~~~~~~~~~~^^^^^^^^
+KeyError: 'text'
+2024-12-29 19:22:10,048 - processor - WARNING - No valid OCR results for plate 20241229_192209_844234
+2024-12-29 19:22:10,049 - video_test - WARNING - No plate detected

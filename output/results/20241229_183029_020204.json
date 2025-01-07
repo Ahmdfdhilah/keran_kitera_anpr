@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T18:30:30.164840",
+  "plate_number": "4 FIZB 6 ZI",
+  "confidence": 0.7917093237828414,
+  "detection_confidence": 0.8739755749702454,
+  "bbox": [
+    894,
+    662,
+    1005,
+    707
+  ],
+  "crop_path": "output\\crops\\20241229_183029_020204_4 FIZB 6 ZI_0.79.jpg"
+}

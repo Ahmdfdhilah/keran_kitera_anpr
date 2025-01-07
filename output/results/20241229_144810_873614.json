@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T14:48:11.422355",
+  "plate_number": "OEI2664O",
+  "confidence": 0.3502806041207558,
+  "detection_confidence": 0.8998149633407593,
+  "bbox": [
+    755,
+    590,
+    852,
+    630
+  ],
+  "crop_path": "output\\crops\\20241229_144810_873614_OEI2664O_0.35.jpg"
+}

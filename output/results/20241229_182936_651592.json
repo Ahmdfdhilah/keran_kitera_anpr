@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T18:29:38.082384",
+  "plate_number": "66 BEIZ 4 B",
+  "confidence": 0.30720212423955506,
+  "detection_confidence": 0.8874635100364685,
+  "bbox": [
+    800,
+    611,
+    901,
+    654
+  ],
+  "crop_path": "output\\crops\\20241229_182936_651592_66 BEIZ 4 B_0.31.jpg"
+}

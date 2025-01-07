@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T19:19:34.409672",
+  "plate_number": "BE 35758",
+  "confidence": 0.565335438757624,
+  "detection_confidence": 0.6817815899848938,
+  "bbox": [
+    1115,
+    566,
+    1196,
+    598
+  ],
+  "crop_path": "output\\crops\\20241229_191934_197584_BE 35758_0.57.jpg"
+}

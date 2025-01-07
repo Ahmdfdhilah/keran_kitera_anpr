@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T14:51:24.350903",
+  "plate_number": "AZE5",
+  "confidence": 0.35200753808021545,
+  "detection_confidence": 0.3143865466117859,
+  "bbox": [
+    1169,
+    574,
+    1246,
+    610
+  ],
+  "crop_path": "output\\crops\\20241229_145124_031733_AZE5_0.35.jpg"
+}

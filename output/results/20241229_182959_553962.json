@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T18:30:00.482879",
+  "plate_number": "I 69 IZ PYGJ",
+  "confidence": 0.88815179241984,
+  "detection_confidence": 0.906122624874115,
+  "bbox": [
+    936,
+    694,
+    1068,
+    756
+  ],
+  "crop_path": "output\\crops\\20241229_182959_553962_I 69 IZ PYGJ_0.89.jpg"
+}

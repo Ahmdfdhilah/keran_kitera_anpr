@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T18:28:16.693913",
+  "plate_number": "IB 69 IZ PYGH",
+  "confidence": 0.4778031868835625,
+  "detection_confidence": 0.8780290484428406,
+  "bbox": [
+    802,
+    629,
+    909,
+    675
+  ],
+  "crop_path": "output\\crops\\20241229_182815_703774_IB 69 IZ PYGH_0.48.jpg"
+}

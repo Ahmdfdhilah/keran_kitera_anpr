@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T19:21:13.374974",
+  "plate_number": "PYG",
+  "confidence": 0.9847410346436667,
+  "detection_confidence": 0.8769778609275818,
+  "bbox": [
+    1232,
+    814,
+    1386,
+    909
+  ],
+  "crop_path": "output\\crops\\20241229_192113_106984_PYG_0.98.jpg"
+}

@@ -41,7 +41,7 @@ class VideoTester:
             os.makedirs(self.result_path, exist_ok=True)
             
             # Process frame
-            plates = await self.processor.process_frame(frame, "test")
+            plates = await self.processor.process_frame(frame=frame)
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             
@@ -55,23 +55,7 @@ class VideoTester:
                         f"plate_{best_detection['text']}_{timestamp}.jpg"
                     )
                     cv2.imwrite(plate_path, best_detection['plate_image'])
-                    
-                    result = {
-                        "timestamp": timestamp,
-                        "plate_number": best_detection['text'],
-                        "confidence": float(best_detection['confidence']),
-                        "plate_path": plate_path
-                    }
-                    
-                    # Log results
-                    log_path = os.path.join(self.result_path, "test_results.log")
-                    with open(log_path, "a") as f:
-                        json.dump(result, f)
-                        f.write("\n")
-                        
-                    logger.info(f"Detected plate: {best_detection['text']} ({best_detection['confidence']:.2f})")
-                    logger.info(f"Saved plate to: {plate_path}")
-                    logger.info(f"Updated log at: {log_path}")
+        
                 else:
                     logger.warning("Detection confidence too low")
             else:

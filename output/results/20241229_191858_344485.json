@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T19:18:58.685624",
+  "plate_number": "3920 USO",
+  "confidence": 0.552394335282376,
+  "detection_confidence": 0.8682875633239746,
+  "bbox": [
+    1241,
+    566,
+    1322,
+    607
+  ],
+  "crop_path": "output\\crops\\20241229_191858_344485_3920 USO_0.55.jpg"
+}

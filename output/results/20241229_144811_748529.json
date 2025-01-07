@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-12-29T14:48:11.890047",
+  "plate_number": "O5I28OW",
+  "confidence": 0.3577650611547058,
+  "detection_confidence": 0.8907873034477234,
+  "bbox": [
+    871,
+    638,
+    984,
+    688
+  ],
+  "crop_path": "output\\crops\\20241229_144811_748529_O5I28OW_0.36.jpg"
+}
