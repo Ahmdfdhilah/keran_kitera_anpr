@@ -6,7 +6,7 @@ from config.db import (
     postgresql_password,
     postgresql_user
 )
-from config.settings import CameraConfig
+from schemas.schema import CameraConfig
 
 def get_cameras_from_db() -> Dict[str, CameraConfig]:
     """

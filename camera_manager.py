@@ -4,7 +4,7 @@ import cv2
 import imutils
 from typing import Dict, Optional, Tuple, List
 import logging
-from config.settings import CameraConfig
+from schemas.schema import CameraConfig
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
