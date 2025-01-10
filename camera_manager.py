@@ -90,9 +90,12 @@ class CameraManager:
                 camera = Camera(config, gate_id, direction)
                 self.cameras[(gate_id, direction)] = camera
                 
-                # Start camera initialization
-                task = asyncio.create_task(camera.initialize())
-                init_tasks.append(task)
+                try:
+                    task = asyncio.create_task(camera.initialize())
+                    init_tasks.append(task)
+                except Exception as e:
+                    logger.error(f"Error scheduling camera initialization: {camera_id}, {e}")
+
                 
         # Wait for all cameras to initialize
         if init_tasks:

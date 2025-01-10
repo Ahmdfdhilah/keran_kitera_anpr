@@ -1,11 +1,11 @@
-# config/settings.py
 from pydantic import BaseModel, Field
 from typing import List, Dict, Union
 from functools import lru_cache
+from db.postgresql import get_cameras_from_db
 
 class CameraConfig(BaseModel):
     name: str
-    url: Union[str, int] 
+    url: Union[str, int]
     gate_id: str
     direction: str
     username: str | None = None
@@ -13,8 +13,9 @@ class CameraConfig(BaseModel):
     resize_width: int = 1080
     enabled: bool = True
 
+
 class ANPRConfig(BaseModel):
-    config_path: str = "models/yolov4-ANPR.cfg"  # Changed from model_path
+    config_path: str = "models/yolov4-ANPR.cfg"
     weights_path: str = "models/yolov4-ANPR.weights"
     names_path: str = "models/yolov4-ANPR.names"
     conf_threshold: float = 0.9
@@ -22,17 +23,24 @@ class ANPRConfig(BaseModel):
     input_width: int = 416
     input_height: int = 416
 
-    model_config = {
-        'protected_namespaces': ()
-    }
+    model_config = {"protected_namespaces": ()}
+
 
 class Settings(BaseModel):
     cameras: Dict[str, CameraConfig]
     anpr: ANPRConfig
     result_path: str = "result"
-    mqtt_broker: str = "localhost"
+    mqtt_broker: str = "el.itera.ac.id"
     mqtt_port: int = 1883
+    http_host: str = "localhost"
+    http_port: int = 8000
 
-    model_config = {
-        'protected_namespaces': ()
-    }
+    model_config = {"protected_namespaces": ()}
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings(
+        cameras = get_cameras_from_db(),
+        anpr=ANPRConfig(),
+    )

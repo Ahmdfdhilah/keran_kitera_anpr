@@ -51,13 +51,10 @@ class ANPRProcessor:
         outs = self.net.forward(self._get_output_names())
 
         frameHeight, frameWidth = frame.shape[:2]
-        classIds, confidences, boxes = [], [], []
         
-        # Detection logic
-        detected_plates = await self._process_detections(
-            outs, frameHeight, frameWidth, frame, camera_id
-        )
-        
+        # Use the _process_detections method to handle detection logic
+        detected_plates = await self._process_detections(outs, frameHeight, frameWidth, frame, camera_id)
+
         return detected_plates
 
     async def _process_detections(self, outs, frameHeight, frameWidth, frame, camera_id):
@@ -103,6 +100,12 @@ class ANPRProcessor:
                 camera_id
             )
             if plate_info:
+                plate_info.update({
+                    'left': left,
+                    'top': top,
+                    'width': width,
+                    'height': height
+                })
                 detected_plates.append(plate_info)
 
         return detected_plates
