@@ -30,27 +30,10 @@ class MQTTService:
         self.running = asyncio.Event()
         self.loop = None
 
-    def setup(self, loop: asyncio.AbstractEventLoop):
-        """Set up the MQTT service with an event loop"""
-        if not loop:
-            raise ValueError("Event loop cannot be None")
-
-        if self.loop:
-            logger.warning("Event loop already initialized")
-            return
-
-        self.loop = loop
-        self.running.set()
-        logger.info("Event loop initialized successfully")
-
-    async def start_mqtt_async(self):
-        """Start MQTT client asynchronously."""
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self._start_mqtt)
-
-    def _start_mqtt(self):
+    def _start(self):
         """Start MQTT client in a separate thread to avoid blocking."""
         try:
+            self.loop = asyncio.get_running_loop() 
             self.mqtt_client.connect(self.settings.mqtt_broker, self.settings.mqtt_port)
             self.mqtt_client.loop_start()
             logger.info("MQTT Service started")
