@@ -3,6 +3,7 @@ import json
 import logging
 import base64
 from datetime import datetime
+import time
 import cv2
 from paho.mqtt.client import Client as MQTTClient
 from processor import ANPRProcessor
@@ -11,7 +12,6 @@ import paho.mqtt.client as mqtt
 from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger("MQTTService")
-
 
 class MQTTService:
     def __init__(
@@ -39,6 +39,7 @@ class MQTTService:
             logger.info("MQTT Service started")
         except Exception as e:
             logger.error(f"MQTT connection error: {e}")
+            self._reconnect()  # Try to reconnect on failure
 
     def _on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
@@ -46,10 +47,25 @@ class MQTTService:
             client.subscribe("portal/anpr/+/+/request", qos=2)
         else:
             logger.error(f"MQTT connection failed with code {rc}")
+            self._reconnect()  # Try to reconnect on connection failure
 
     def _on_disconnect(self, client, userdata, rc):
         if rc != 0:
             logger.warning("Unexpected MQTT disconnection. Reconnecting...")
+            self._reconnect()  # Try to reconnect if disconnected
+
+    def _reconnect(self):
+        """Handle automatic reconnect."""
+        while True:
+            try:
+                logger.info("Attempting to reconnect to MQTT broker...")
+                self.mqtt_client.connect(self.settings.mqtt_broker, self.settings.mqtt_port)
+                self.mqtt_client.loop_start()
+                logger.info("Reconnected to MQTT Broker")
+                break  # Exit the loop once connected successfully
+            except Exception as e:
+                logger.error(f"Reconnection failed: {e}")
+                time.sleep(5)  # Wait for 5 seconds before trying again
 
     def _on_message(self, client, userdata, message):
         topic_parts = message.topic.split("/")

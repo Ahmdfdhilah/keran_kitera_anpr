@@ -18,6 +18,9 @@ class Camera:
         self.is_initializing = False
         self.max_retries = 3
         self.retry_interval = 5.0
+        self.reconnect_interval = 10.0
+        self.is_running = True
+        self.reconnect_task = None
         
     async def initialize(self):
         """Initialize the camera connection"""
@@ -25,7 +28,7 @@ class Camera:
             return
 
         retry_count = 0
-        while retry_count < self.max_retries:
+        while retry_count < self.max_retries and self.is_running:
             try:
                 self.is_initializing = True
                 self.stream = VideoStream(src=self.config.url).start()
@@ -37,6 +40,8 @@ class Camera:
                     raise Exception("Failed to read test frame")
                     
                 logger.info(f"Initialized camera for gate {self.gate_id} {self.direction}")
+                # Start background reconnection monitor
+                self.start_reconnect_monitor()
                 return
                 
             except Exception as e:
@@ -50,22 +55,76 @@ class Camera:
                 self.is_initializing = False
                 
         raise Exception(f"Failed to initialize camera after {self.max_retries} attempts")
+
+    def start_reconnect_monitor(self):
+        """Start background task to monitor camera connection"""
+        if self.reconnect_task is None:
+            self.reconnect_task = asyncio.create_task(self._monitor_connection())
+            
+    async def _monitor_connection(self):
+        """Monitor camera connection and attempt reconnection if needed"""
+        while self.is_running:
+            try:
+                if self.stream is None:
+                    await self.initialize()
+                else:
+                    # Test connection by attempting to read frame
+                    frame = self.stream.read()
+                    if frame is None:
+                        logger.warning(f"Camera {self.gate_id}-{self.direction} connection lost. Attempting reconnection...")
+                        self.stream.stop()
+                        self.stream = None
+                        await self.initialize()
+                        
+            except Exception as e:
+                logger.error(f"Error in connection monitor: {e}")
+                if self.stream:
+                    self.stream.stop()
+                    self.stream = None
+                    
+            await asyncio.sleep(self.reconnect_interval)
             
     async def get_frame(self, resize_width: int = None) -> Optional[cv2.Mat]:
-        """Capture a single frame on demand"""
+        """Capture a single frame on demand with automatic reconnection"""
         if not self.stream and not self.is_initializing:
-            await self.initialize()
+            try:
+                await self.initialize()
+            except Exception as e:
+                logger.error(f"Failed to reinitialize camera during frame capture: {e}")
+                return None
             
         if not self.stream:
             return None
             
-        frame = self.stream.read()
-        if frame is not None and resize_width:
-            frame = imutils.resize(frame, width=resize_width)
-        return frame
+        try:
+            frame = self.stream.read()
+            if frame is None:
+                logger.warning("Received null frame, triggering reconnection...")
+                self.stream.stop()
+                self.stream = None
+                return None
+                
+            if resize_width:
+                frame = imutils.resize(frame, width=resize_width)
+            return frame
+            
+        except Exception as e:
+            logger.error(f"Error capturing frame: {e}")
+            self.stream.stop()
+            self.stream = None
+            return None
         
-    def release(self):
-        """Release camera resources"""
+    async def release(self):
+        """Release camera resources and stop reconnection monitoring"""
+        self.is_running = False
+        if self.reconnect_task:
+            self.reconnect_task.cancel()
+            try:
+                await self.reconnect_task
+            except asyncio.CancelledError:
+                pass
+            self.reconnect_task = None
+            
         if self.stream:
             self.stream.stop()
             self.stream = None
@@ -75,7 +134,6 @@ class CameraManager:
         self.cameras: Dict[Tuple[str, str], Camera] = {}
         self.camera_configs: Dict[str, CameraConfig] = {}
         self.camera_mappings: Dict[str, Tuple[str, str]] = {}
-        self.initialization_tasks: List[asyncio.Task] = []
         
     async def configure(self, camera_configs: Dict[str, CameraConfig], mappings: Dict[str, Tuple[str, str]]):
         """Configure and initialize all cameras in parallel"""
@@ -95,11 +153,13 @@ class CameraManager:
                     init_tasks.append(task)
                 except Exception as e:
                     logger.error(f"Error scheduling camera initialization: {camera_id}, {e}")
-
                 
         # Wait for all cameras to initialize
         if init_tasks:
-            await asyncio.gather(*init_tasks, return_exceptions=True)
+            results = await asyncio.gather(*init_tasks, return_exceptions=True)
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.error(f"Camera initialization error: {result}")
             
         logger.info(f"Initialized {len(self.cameras)} cameras")
         
@@ -109,6 +169,8 @@ class CameraManager:
         
     async def cleanup(self):
         """Cleanup all cameras"""
+        cleanup_tasks = []
         for camera in self.cameras.values():
-            camera.release()
+            cleanup_tasks.append(camera.release())
+        await asyncio.gather(*cleanup_tasks)
         self.cameras.clear()
