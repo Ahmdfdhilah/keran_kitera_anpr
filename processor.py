@@ -1,16 +1,16 @@
 import logging
-import json
 import re
 from typing import Optional, Tuple, Dict
 from google.cloud import vision
 from google.oauth2 import service_account
 from config.settings import Settings
-
+import os
 logger = logging.getLogger(__name__)
 
 class ANPRProcessor:
     def __init__(self, settings: Settings):
         self.settings = settings
+        self.token_path = os.path.join(os.path.dirname(__file__), self.settings.google_vision_token)
         self.client = None
         self.initialize_vision_client()
         
@@ -26,7 +26,7 @@ class ANPRProcessor:
         """Initialize Google Cloud Vision client with credentials"""
         try:
             credentials = service_account.Credentials.from_service_account_file(
-                self.settings.google_vision_token,
+                self.token_path,
                 scopes=['https://www.googleapis.com/auth/cloud-platform']
             )
             self.client = vision.ImageAnnotatorClient(credentials=credentials)
