@@ -113,12 +113,32 @@ class MQTTService:
             camera = self.camera_manager.get_camera(gate_id, direction)
             if not camera:
                 logger.error(f"No camera configured for gate {gate_id} direction {direction}")
+                await self.publish_mqtt_response(
+                    gate_id,
+                    direction,
+                    None,
+                    identifier,
+                    "CAMERA_ERROR",
+                    0.0,
+                    None,
+                    "Camera not configured"
+                )
                 return
 
             # Capture frame from camera
             original_frame = await camera.get_frame()
             if original_frame is None:
                 logger.error(f"Failed to capture frame from camera {gate_id}-{direction}")
+                await self.publish_mqtt_response(
+                    gate_id,
+                    direction,
+                    None,
+                    identifier,
+                    "CAPTURE_ERROR",
+                    0.0,
+                    None,
+                    "Failed to capture frame"
+                )
                 return
 
             # Save original frame for Google Vision API
@@ -133,31 +153,34 @@ class MQTTService:
             # Process with Google Vision API
             anpr_result = await self.processor.process_image(img_bytes)
             
-            if not anpr_result["success"]:
-                logger.error(f"ANPR processing failed: {anpr_result['message']}")
-                # Still continue to publish response with empty plate
-
             # Resize frame for MQTT transmission
-            resized_frame = await camera.resize_frame(original_frame)
+            resized_frame = cv2.resize(original_frame, (640, 480))  # Changed from await to direct cv2 call
             screenshot_path = f"{self.settings.result_path}/{gate_id}_{direction}_{timestamp}.jpg"
             cv2.imwrite(screenshot_path, resized_frame)
 
-            # If plate detected, save cropped plate image
+            # Initialize plate_image_path as None
             plate_image_path = None
-            if anpr_result.get("success") and "bounding_poly" in anpr_result:
-                vertices = anpr_result["bounding_poly"].vertices
-                left = min(vertex.x for vertex in vertices)
-                top = min(vertex.y for vertex in vertices)
-                right = max(vertex.x for vertex in vertices)
-                bottom = max(vertex.y for vertex in vertices)
-                
-                plate_image_path = self.save_cropped_plate(
-                    original_frame,
-                    left, top,
-                    right - left,
-                    bottom - top,
-                    anpr_result["plate_number"]
-                )
+
+            if anpr_result["success"]:
+                # If plate detected, save cropped plate image
+                if "bounding_poly" in anpr_result:
+                    vertices = anpr_result["bounding_poly"].vertices
+                    left = min(vertex.x for vertex in vertices)
+                    top = min(vertex.y for vertex in vertices)
+                    right = max(vertex.x for vertex in vertices)
+                    bottom = max(vertex.y for vertex in vertices)
+                    
+                    plate_image_path = self.save_cropped_plate(
+                        original_frame,
+                        left, top,
+                        right - left,
+                        bottom - top,
+                        anpr_result["plate_number"]
+                    )
+            else:
+                # Set default values for failed detection
+                anpr_result["plate_number"] = "TIDAK TERBACA"
+                anpr_result["confidence"] = 0.0
 
             # Publish MQTT response
             await self.publish_mqtt_response(
@@ -165,13 +188,24 @@ class MQTTService:
                 direction,
                 screenshot_path,
                 identifier,
-                anpr_result.get("plate_number", ""),
+                anpr_result["plate_number"],
                 anpr_result.get("confidence", 0),
-                plate_image_path
+                plate_image_path,
+                anpr_result.get("message", "No plate detected")
             )
 
         except Exception as e:
             logger.error(f"Error in ANPR processing: {e}")
+            await self.publish_mqtt_response(
+                gate_id,
+                direction,
+                None,
+                identifier,
+                "SYSTEM_ERROR",
+                0.0,
+                None,
+                str(e)
+            )
 
     async def publish_mqtt_response(
         self,
@@ -181,14 +215,17 @@ class MQTTService:
         identifier,
         plate_text,
         confidence,
-        plate_image_path=None
+        plate_image_path=None,
+        error_message=None
     ):
         try:
-            # Encode main image
-            with open(image_path, "rb") as img_file:
-                image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+            # Initialize image_base64 as None
+            image_base64 = None
+            if image_path:
+                with open(image_path, "rb") as img_file:
+                    image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
 
-            # Encode plate image if available
+            # Initialize plate_image_base64 as None
             plate_image_base64 = None
             if plate_image_path:
                 with open(plate_image_path, "rb") as plate_file:
@@ -201,7 +238,9 @@ class MQTTService:
                 "confidence": confidence,
                 "timestamp": datetime.now().isoformat(),
                 "image": image_base64,
-                "plate_image": plate_image_base64
+                "plate_image": plate_image_base64,
+                "status": "success" if plate_text not in ["TIDAK TERBACA", "CAMERA_ERROR", "CAPTURE_ERROR", "SYSTEM_ERROR"] else "error",
+                "message": error_message
             }
 
             await asyncio.get_event_loop().run_in_executor(
@@ -215,7 +254,7 @@ class MQTTService:
 
         except Exception as e:
             logger.error(f"Error publishing MQTT response: {e}")
-
+            
     def _publish_mqtt_response(self, topic, payload):
         self.mqtt_client.publish(topic, json.dumps(payload), qos=2)
 

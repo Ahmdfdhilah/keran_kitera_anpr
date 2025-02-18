@@ -13,7 +13,7 @@ class CameraConfig(BaseModel):
     direction: str
     username: str | None = None
     password: str | None = None
-    resize_width: int = 720
+    resize_width: int = 640
     enabled: bool = True
 
 
