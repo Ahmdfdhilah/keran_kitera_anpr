@@ -84,7 +84,7 @@ class Camera:
                     
             await asyncio.sleep(self.reconnect_interval)
             
-    async def get_frame(self, resize_width: int = None) -> Optional[cv2.Mat]:
+    async def get_frame(self) -> Optional[cv2.Mat]:
         """Capture a single frame on demand with automatic reconnection"""
         if not self.stream and not self.is_initializing:
             try:
@@ -104,8 +104,6 @@ class Camera:
                 self.stream = None
                 return None
                 
-            if resize_width:
-                frame = imutils.resize(frame, width=resize_width)
             return frame
             
         except Exception as e:
@@ -113,6 +111,16 @@ class Camera:
             self.stream.stop()
             self.stream = None
             return None
+
+    def resize_frame(self, frame: cv2.Mat) -> cv2.Mat:
+        """Resize frame to specified width while maintaining aspect ratio"""
+        try:
+            if frame is not None and self.config.resize_width > 0:
+                return imutils.resize(frame, width=self.config.resize_width)
+            return frame
+        except Exception as e:
+            logger.error(f"Error resizing frame: {e}")
+            return frame
         
     async def release(self):
         """Release camera resources and stop reconnection monitoring"""

@@ -1,6 +1,10 @@
+import os
+from dotenv import load_dotenv
 from typing import Dict, Union
 from pydantic import BaseModel
 
+# Load variabel dari .env
+load_dotenv()
 
 class CameraConfig(BaseModel):
     name: str
@@ -9,7 +13,7 @@ class CameraConfig(BaseModel):
     direction: str
     username: str | None = None
     password: str | None = None
-    resize_width: int = 1080
+    resize_width: int = 720
     enabled: bool = True
 
 
@@ -21,7 +25,6 @@ class ANPRConfig(BaseModel):
     nms_threshold: float = 0.3
     input_width: int = 416
     input_height: int = 416
-
     model_config = {"protected_namespaces": ()}
 
 
@@ -29,7 +32,7 @@ class Settings(BaseModel):
     cameras: Dict[str, CameraConfig]
     anpr: ANPRConfig
     result_path: str = "result"
-    mqtt_broker: str = "localhost"
-    mqtt_port: int = 1883
-
+    mqtt_broker: str = os.getenv("MQTT_BROKER", "localhost")
+    mqtt_port: int = int(os.getenv("MQTT_PORT", 1883))
+    google_vision_token: str = os.getenv("GOOGLE_VISION_TOKEN", "token")
     model_config = {"protected_namespaces": ()}
