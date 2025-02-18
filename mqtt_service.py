@@ -233,12 +233,10 @@ class MQTTService:
 
             response_topic = f"portal/anpr/{gate_id}/{direction}/response"
             payload = {
-                "identifier": identifier,
-                "plate_text": plate_text,
+                "identifier": plate_text,
                 "confidence": confidence,
                 "timestamp": datetime.now().isoformat(),
                 "image": image_base64,
-                "plate_image": plate_image_base64,
                 "status": "success" if plate_text not in ["TIDAK TERBACA", "CAMERA_ERROR", "CAPTURE_ERROR", "SYSTEM_ERROR"] else "error",
                 "message": error_message
             }
