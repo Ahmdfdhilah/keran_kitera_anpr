@@ -1,10 +1,13 @@
 import logging
 import re
+import time
 from typing import Optional, Tuple, Dict
 from google.cloud import vision
 from google.oauth2 import service_account
+from google.api_core import retry
 from config.settings import Settings
 import os
+
 logger = logging.getLogger(__name__)
 
 class ANPRProcessor:
@@ -12,6 +15,8 @@ class ANPRProcessor:
         self.settings = settings
         self.token_path = os.path.join(os.path.dirname(__file__), self.settings.google_vision_token)
         self.client = None
+        self.max_retries = 3
+        self.retry_delay = 1  # seconds
         self.initialize_vision_client()
         
         # Indonesian license plate patterns
@@ -22,8 +27,8 @@ class ANPRProcessor:
             r'^[A-Z]{1,2}\d{1,4}[A-Z]{1,2}$'           # No spaces shorter (B1234AB)
         ]
 
-    def initialize_vision_client(self):
-        """Initialize Google Cloud Vision client with credentials"""
+    def initialize_vision_client(self) -> None:
+        """Initialize Google Cloud Vision client with credentials and retry mechanism"""
         try:
             credentials = service_account.Credentials.from_service_account_file(
                 self.token_path,
@@ -34,6 +39,37 @@ class ANPRProcessor:
         except Exception as e:
             logger.error(f"Failed to initialize Google Cloud Vision client: {str(e)}")
             raise
+
+    @retry.Retry(predicate=retry.if_exception_type(Exception))
+    def _make_vision_request(self, image: vision.Image) -> vision.ImageAnnotatorClient.text_detection:
+        """Make a request to Vision API with retry mechanism"""
+        if self.client is None:
+            self.initialize_vision_client()
+        return self.client.text_detection(image=image)
+
+    def _handle_vision_error(self, error: Exception, attempt: int) -> bool:
+        """Handle Vision API errors and determine if retry is needed"""
+        error_str = str(error)
+        
+        # List of retryable error conditions
+        retryable_conditions = [
+            "503",  # Service Unavailable
+            "GOAWAY received",
+            "session_timed_out",
+            "CONNECTION_RESET",
+            "Connection reset by peer",
+            "deadline exceeded"
+        ]
+        
+        is_retryable = any(condition in error_str for condition in retryable_conditions)
+        
+        if is_retryable and attempt < self.max_retries:
+            wait_time = self.retry_delay * (2 ** (attempt - 1))  # Exponential backoff
+            logger.warning(f"Retryable error occurred (attempt {attempt}/{self.max_retries}). "
+                         f"Waiting {wait_time} seconds before retry. Error: {error_str}")
+            time.sleep(wait_time)
+            return True
+        return False
 
     def preprocess_text(self, text: str) -> str:
         """Preprocess text to handle common OCR issues"""
@@ -64,7 +100,7 @@ class ANPRProcessor:
             else:
                 in_number_section = False
                 processed_text += char
-                
+        
         # Remove any non-alphanumeric characters except spaces
         processed_text = re.sub(r'[^A-Z0-9\s]', '', processed_text)
         
@@ -92,10 +128,13 @@ class ANPRProcessor:
 
     def select_best_plate_candidate(self, annotations: list) -> Optional[Tuple[str, float]]:
         """Select the best license plate candidate from OCR results"""
+        if not annotations:
+            return None
+            
         candidates = []
         
         # First, check the full text annotation
-        full_text = annotations[0].description if annotations else ""
+        full_text = annotations[0].description
         
         # Split the full text into lines and check each line
         for line in full_text.split('\n'):
@@ -105,7 +144,7 @@ class ANPRProcessor:
         # Then check individual text annotations
         for annotation in annotations[1:]:  # Skip the first (full text) annotation
             text = annotation.description.strip()
-            confidence = annotation.confidence
+            confidence = annotation.confidence or 0.0  # Default to 0.0 if confidence is None
             
             if self.is_valid_indonesian_plate(text):
                 candidates.append((self.format_plate_number(text), confidence))
@@ -116,46 +155,63 @@ class ANPRProcessor:
         return None
 
     async def process_image(self, image_bytes: bytes) -> Dict:
-        """Process image and extract license plate"""
-        try:
-            if self.client is None:
-                self.initialize_vision_client()
+        """Process image and extract license plate with retry mechanism"""
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                image = vision.Image(content=image_bytes)
+                response = self._make_vision_request(image)
+                
+                if response.error.message:
+                    raise Exception(
+                        f'{response.error.message}\nFor more info on error messages, check: '
+                        'https://cloud.google.com/apis/design/errors'
+                    )
 
-            image = vision.Image(content=image_bytes)
-            response = self.client.text_detection(image=image)
-            
-            if response.error.message:
-                raise Exception(
-                    f'{response.error.message}\nFor more info on error messages, check: '
-                    'https://cloud.google.com/apis/design/errors'
-                )
+                annotations = response.text_annotations
+                
+                if not annotations:
+                    return {
+                        "success": False,
+                        "message": "No text detected",
+                        "attempt": attempt
+                    }
 
-            annotations = response.text_annotations
-            
-            if not annotations:
-                return {"success": False, "message": "No text detected"}
+                # Find best plate candidate
+                best_candidate = self.select_best_plate_candidate(annotations)
+                
+                if best_candidate:
+                    plate_number, confidence = best_candidate
+                    return {
+                        "success": True,
+                        "plate_number": plate_number,
+                        "confidence": confidence,
+                        "raw_text": annotations[0].description,
+                        "attempt": attempt
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": "No valid license plate detected",
+                        "raw_text": annotations[0].description,
+                        "attempt": attempt
+                    }
 
-            # Find best plate candidate
-            best_candidate = self.select_best_plate_candidate(annotations)
-            
-            if best_candidate:
-                plate_number, confidence = best_candidate
-                return {
-                    "success": True,
-                    "plate_number": plate_number,
-                    "confidence": confidence,
-                    "raw_text": annotations[0].description
-                }
-            else:
+            except Exception as e:
+                if self._handle_vision_error(e, attempt):
+                    continue
+                    
+                logger.error(f"Error processing image (attempt {attempt}/{self.max_retries}): {str(e)}")
                 return {
                     "success": False,
-                    "message": "No valid license plate detected",
-                    "raw_text": annotations[0].description
+                    "message": f"Error processing image: {str(e)}",
+                    "attempt": attempt
                 }
 
-        except Exception as e:
-            logger.error(f"Error processing image: {str(e)}")
-            return {"success": False, "message": f"Error processing image: {str(e)}"}
+        return {
+            "success": False,
+            "message": "Max retries exceeded",
+            "attempt": self.max_retries
+        }
 
     def format_plate_number(self, plate: str) -> str:
         """Format license plate number to standard format"""
